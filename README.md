@@ -1,5 +1,9 @@
 # Agent Orchestrator
 
+[![Tests](https://github.com/jstilb/agent-orchestrator/actions/workflows/test.yml/badge.svg)](https://github.com/jstilb/agent-orchestrator/actions/workflows/test.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 Multi-agent orchestration system with state machine coordination and typed message passing. Demonstrates LangGraph-inspired patterns for building reliable, testable agent pipelines.
 
 ## Architecture
