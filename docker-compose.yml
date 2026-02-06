@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      target: production
+    ports:
+      - "8000:8000"
+    environment:
+      - ORCHESTRATOR_MODE=mock
+      - MAX_ITERATIONS=3
+      - APPROVAL_THRESHOLD=0.6
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:8000/health'); assert r.status_code == 200"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  test:
+    build:
+      context: .
+      target: development
+    command: pytest --cov=src --cov-report=term-missing -v
+    profiles:
+      - test
