@@ -180,3 +180,10 @@ See [docs/decisions/](docs/decisions/) for Architecture Decision Records:
 ## License
 
 MIT
+
+
+## Related Projects
+
+- [modern-rag-pipeline](https://github.com/jstilb/modern-rag-pipeline) — Production RAG pipeline with hybrid search and vector storage
+- [mcp-toolkit-server](https://github.com/jstilb/mcp-toolkit-server) — MCP server toolkit for Claude AI integration
+- [llm-eval-framework](https://github.com/jstilb/llm-eval-framework) — LLM evaluation and testing framework
