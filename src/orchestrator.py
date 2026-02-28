@@ -18,6 +18,7 @@ from src.agents.analyzer import AnalyzerAgent
 from src.agents.researcher import ResearchAgent
 from src.agents.reviewer import ReviewerAgent
 from src.state.models import TaskState, TaskStatus
+from src.telemetry import get_tracer
 
 
 @dataclass
@@ -56,24 +57,49 @@ class AgentOrchestrator:
         """Execute the full agent pipeline for a query.
 
         Returns the final TaskState with all intermediate results.
+        Emits OpenTelemetry spans for each pipeline stage.
         """
+        tracer = get_tracer()
         state = TaskState(
             query=query,
             max_iterations=self.config.max_iterations,
         )
 
-        # Step 1: Research
-        state = self.researcher.process(state)
-        if state.status == TaskStatus.FAILED:
-            return state
+        with tracer.start_as_current_span("orchestrator.run") as root_span:
+            root_span.set_attribute("query", query)
+            root_span.set_attribute("mock", self.config.mock)
+            root_span.set_attribute("max_iterations", self.config.max_iterations)
 
-        # Step 2-3: Analyze and Review loop
-        while state.status != TaskStatus.COMPLETE and state.status != TaskStatus.FAILED:
-            # Analyze
-            state = self.analyzer.process(state)
+            # Step 1: Research
+            with tracer.start_as_current_span("agent.research") as span:
+                span.set_attribute("query", query)
+                state = self.researcher.process(state)
+                span.set_attribute("results_count", len(state.research_results))
+                span.set_attribute("status", state.status.value)
 
-            # Review (may send back to analyze)
-            state = self.reviewer.process(state)
+            if state.status == TaskStatus.FAILED:
+                root_span.set_attribute("final_status", state.status.value)
+                return state
+
+            # Step 2-3: Analyze and Review loop
+            iteration = 0
+            while state.status != TaskStatus.COMPLETE and state.status != TaskStatus.FAILED:
+                with tracer.start_as_current_span(f"agent.analyze.iter{iteration}") as span:
+                    span.set_attribute("iteration", iteration)
+                    state = self.analyzer.process(state)
+                    span.set_attribute("analysis_length", len(state.analysis))
+                    span.set_attribute("status", state.status.value)
+
+                with tracer.start_as_current_span(f"agent.review.iter{iteration}") as span:
+                    span.set_attribute("iteration", iteration)
+                    state = self.reviewer.process(state)
+                    span.set_attribute("status", state.status.value)
+                    span.set_attribute("review_notes_count", len(state.review_notes))
+
+                iteration += 1
+
+            root_span.set_attribute("final_status", state.status.value)
+            root_span.set_attribute("total_iterations", iteration)
 
         return state
 
