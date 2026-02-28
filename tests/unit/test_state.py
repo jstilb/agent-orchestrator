@@ -55,6 +55,49 @@ class TestTaskState:
         state = TaskState(query=query)
         assert state.query == query
 
+    @given(
+        query=st.text(min_size=1, max_size=100),
+        analysis=st.text(max_size=200),
+        research_results=st.lists(st.text(min_size=1, max_size=80), max_size=5),
+        final_output=st.text(max_size=200),
+        iteration_count=st.integers(min_value=0, max_value=10),
+        max_iterations=st.integers(min_value=1, max_value=10),
+    )
+    def test_serialization_roundtrip(
+        self,
+        query: str,
+        analysis: str,
+        research_results: list[str],
+        final_output: str,
+        iteration_count: int,
+        max_iterations: int,
+    ) -> None:
+        """Property: TaskState serialization round-trip preserves all fields."""
+        original = TaskState(
+            query=query,
+            status=TaskStatus.ANALYZING,
+            analysis=analysis,
+            research_results=research_results,
+            final_output=final_output,
+            iteration_count=iteration_count,
+            max_iterations=max_iterations,
+        )
+        original.add_message("test message", AgentRole.RESEARCHER)
+
+        serialized = original.to_dict()
+        restored = TaskState.from_dict(serialized)
+
+        assert restored.query == original.query, "query must survive round-trip"
+        assert restored.status == original.status, "status must survive round-trip"
+        assert restored.analysis == original.analysis, "analysis must survive round-trip"
+        assert restored.research_results == original.research_results, "research_results must survive round-trip"
+        assert restored.final_output == original.final_output, "final_output must survive round-trip"
+        assert restored.iteration_count == original.iteration_count, "iteration_count must survive round-trip"
+        assert restored.max_iterations == original.max_iterations, "max_iterations must survive round-trip"
+        assert len(restored.messages) == len(original.messages), "message count must survive round-trip"
+        assert restored.messages[0].content == original.messages[0].content, "message content must survive round-trip"
+        assert restored.messages[0].sender == original.messages[0].sender, "message sender must survive round-trip"
+
 
 class TestMessage:
     def test_create(self) -> None:
