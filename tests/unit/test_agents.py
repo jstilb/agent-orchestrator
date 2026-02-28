@@ -95,3 +95,68 @@ class TestReviewerAgent:
         state.analysis = "Short"
         result = agent.process(state)
         assert result.status == TaskStatus.COMPLETE
+
+
+class TestProductionModeWithMockFallback:
+    """ISC-2730: Test that all agents fall back to mock when ANTHROPIC_API_KEY is absent."""
+
+    def test_researcher_mock_fallback_without_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """ResearchAgent._production_research() falls back to mock when key is absent."""
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        # When no API key, mock=None should resolve to mock=True
+        agent = ResearchAgent(mock=None)
+        assert agent.mock is True, "Agent should auto-detect mock=True when no API key"
+
+        state = TaskState(query="technology")
+        result = agent.process(state)
+        assert result.status == TaskStatus.RESEARCHING
+        assert len(result.research_results) > 0, "Mock fallback must return research results"
+        assert all(isinstance(r, str) for r in result.research_results), "Results must be strings"
+
+    def test_analyzer_mock_fallback_without_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """AnalyzerAgent._production_analyze() falls back to mock when key is absent."""
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        agent = AnalyzerAgent(mock=None)
+        assert agent.mock is True, "Agent should auto-detect mock=True when no API key"
+
+        state = TaskState(query="test topic")
+        state.research_results = ["Finding 1", "Finding 2"]
+        result = agent.process(state)
+        assert result.status == TaskStatus.ANALYZING
+        assert len(result.analysis) > 0, "Mock fallback must produce non-empty analysis"
+        assert "test topic" in result.analysis, "Analysis must reference the query"
+
+    def test_reviewer_mock_fallback_without_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """ReviewerAgent._production_review() falls back to heuristic when key is absent."""
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        agent = ReviewerAgent(mock=None, approval_threshold=0.6)
+        assert agent.mock is True, "Agent should auto-detect mock=True when no API key"
+
+        state = TaskState(query="test")
+        state.analysis = (
+            "Analysis of 'test':\n"
+            "- Key point one: evidence is strong\n"
+            "- Key point two: methodology is sound\n"
+            "Conclusion: The findings are conclusive."
+        )
+        result = agent.process(state)
+        assert result.status == TaskStatus.COMPLETE, "Good analysis should be approved"
+        assert len(result.review_notes) > 0, "Review notes must be populated"
+
+    def test_production_research_method_exists(self) -> None:
+        """ResearchAgent._production_research is a callable method (ISC-2730)."""
+        agent = ResearchAgent(mock=True)
+        assert callable(getattr(agent, "_production_research", None)), \
+            "_production_research must be implemented as a callable method"
+
+    def test_production_analyze_method_exists(self) -> None:
+        """AnalyzerAgent._production_analyze is a callable method (ISC-2730)."""
+        agent = AnalyzerAgent(mock=True)
+        assert callable(getattr(agent, "_production_analyze", None)), \
+            "_production_analyze must be implemented as a callable method"
+
+    def test_production_review_method_exists(self) -> None:
+        """ReviewerAgent._production_review is a callable method (ISC-2730)."""
+        agent = ReviewerAgent(mock=True)
+        assert callable(getattr(agent, "_production_review", None)), \
+            "_production_review must be implemented as a callable method"
