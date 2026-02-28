@@ -29,13 +29,23 @@ The Agent Orchestrator implements a multi-agent pipeline using state machine coo
 
 ## State Machine
 
-The pipeline follows a directed graph:
+The pipeline follows a directed graph with the following Mermaid state diagram:
 
-```
-PENDING -> RESEARCHING -> ANALYZING -> REVIEWING -> COMPLETE
-                              ^            |
-                              |            | (revision)
-                              +------------+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> RESEARCHING : Orchestrator starts pipeline
+    RESEARCHING --> ANALYZING : Research complete
+    ANALYZING --> REVIEWING : Analysis complete
+    REVIEWING --> COMPLETE : Quality threshold met (score >= threshold)
+    REVIEWING --> ANALYZING : Quality below threshold (revision loop)
+    REVIEWING --> COMPLETE : Max iterations reached
+    PENDING --> FAILED : Error during initialization
+    RESEARCHING --> FAILED : Research error
+    ANALYZING --> FAILED : Analysis error
+    REVIEWING --> FAILED : Review error
+    COMPLETE --> [*]
+    FAILED --> [*]
 ```
 
 ### State Transitions
