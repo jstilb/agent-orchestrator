@@ -1,12 +1,13 @@
 """Research agent that gathers information on a topic.
 
 In mock mode, returns deterministic research results.
-In production mode, would use web search and document retrieval.
+In production mode, uses the Anthropic API to generate real research.
 """
 
 from __future__ import annotations
 
 import hashlib
+import os
 
 from src.agents.base import BaseAgent
 from src.state.models import AgentRole, TaskState, TaskStatus
@@ -33,7 +34,10 @@ class ResearchAgent(BaseAgent):
         ],
     }
 
-    def __init__(self, mock: bool = True) -> None:
+    def __init__(self, mock: bool | None = None) -> None:
+        # Auto-detect mock mode: use production if ANTHROPIC_API_KEY is set, else mock
+        if mock is None:
+            mock = os.environ.get("ANTHROPIC_API_KEY") is None
         super().__init__(role=AgentRole.RESEARCHER, mock=mock)
 
     def process(self, state: TaskState) -> TaskState:
@@ -68,5 +72,39 @@ class ResearchAgent(BaseAgent):
         ]
 
     def _production_research(self, query: str) -> list[str]:
-        """Production research - would use actual search APIs."""
-        return [f"Real research result for: {query}"]
+        """Production research using the Anthropic API.
+
+        Requires ANTHROPIC_API_KEY environment variable.
+        Falls back to mock if key is absent.
+        """
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            return self._mock_research(query)
+
+        try:
+            import anthropic  # type: ignore[import-untyped]
+            client = anthropic.Anthropic(api_key=api_key)
+            message = client.messages.create(
+                model="claude-3-haiku-20240307",
+                max_tokens=512,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Provide 3 concise research findings about: {query}\n"
+                            "Format as a numbered list. Each item should be one sentence."
+                        ),
+                    }
+                ],
+            )
+            raw = message.content[0].text if message.content else ""
+            lines = [line.strip() for line in raw.splitlines() if line.strip()]
+            # Extract lines that look like findings (numbered or bullet)
+            findings = [
+                line.lstrip("0123456789.-) ").strip()
+                for line in lines
+                if line and line[0].isdigit() or line.startswith("-")
+            ]
+            return findings[:3] if findings else [raw[:200]]
+        except Exception as exc:  # noqa: BLE001
+            return [f"Research error (falling back): {exc}", *self._mock_research(query)[:2]]
