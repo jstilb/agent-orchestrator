@@ -85,13 +85,9 @@ def setup_tracing(
     if not _OTEL_AVAILABLE:
         return  # Silently skip if OpenTelemetry not installed
 
-    resolved_service = (
-        service_name
-        or os.environ.get("OTEL_SERVICE_NAME", "agent-orchestrator")
-    )
-    resolved_endpoint = (
-        otlp_endpoint
-        or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
+    resolved_service = service_name or os.environ.get("OTEL_SERVICE_NAME", "agent-orchestrator")
+    resolved_endpoint = otlp_endpoint or os.environ.get(
+        "OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"
     )
 
     resource = Resource(attributes={SERVICE_NAME: resolved_service})

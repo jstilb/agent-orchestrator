@@ -56,7 +56,9 @@ class ReviewerAgent(BaseAgent):
         else:
             state.status = TaskStatus.ANALYZING  # Send back to analyzer
             state.iteration_count += 1
-            self._add_message(state, f"Revision requested (score: {score:.2f}, iteration {state.iteration_count})")
+            self._add_message(
+                state, f"Revision requested (score: {score:.2f}, iteration {state.iteration_count})"
+            )
 
         return state
 
@@ -87,6 +89,7 @@ class ReviewerAgent(BaseAgent):
 
         try:
             import anthropic  # type: ignore[import-untyped]
+
             client = anthropic.Anthropic(api_key=api_key)
             message = client.messages.create(
                 model="claude-3-haiku-20240307",

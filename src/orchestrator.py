@@ -12,7 +12,7 @@ for testing (pure Python state machine fallback).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Optional
 
 from src.agents.analyzer import AnalyzerAgent
 from src.agents.researcher import ResearchAgent
@@ -24,6 +24,7 @@ from src.telemetry import get_tracer
 @dataclass
 class OrchestratorConfig:
     """Configuration for the agent orchestrator."""
+
     mock: bool = True
     max_iterations: int = 3
     approval_threshold: float = 0.6

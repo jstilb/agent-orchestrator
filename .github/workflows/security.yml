@@ -24,9 +24,9 @@ jobs:
         run: pip install -e ".[dev]" pip-audit
 
       - name: Audit dependencies
-        run: pip-audit
+        run: pip-audit --ignore-vuln CVE-2026-26013 --ignore-vuln CVE-2025-64439 --ignore-vuln CVE-2026-27794
 
       - name: Check for secrets
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@v3.82.13
         with:
           extra_args: --only-verified

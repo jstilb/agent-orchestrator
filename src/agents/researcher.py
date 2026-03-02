@@ -6,7 +6,6 @@ In production mode, uses the Anthropic API to generate real research.
 
 from __future__ import annotations
 
-import hashlib
 import os
 
 from src.agents.base import BaseAgent
@@ -64,12 +63,8 @@ class ResearchAgent(BaseAgent):
                 return [r.replace("research:", f"research on '{query}':") for r in results]
 
         # Default with query-specific variation
-        h = int(hashlib.md5(query.encode()).hexdigest()[:4], 16)
         base = self.MOCK_RESULTS["default"]
-        return [
-            f"Finding on '{query}': {base[i % len(base)].split(': ', 1)[1]}"
-            for i in range(3)
-        ]
+        return [f"Finding on '{query}': {base[i % len(base)].split(': ', 1)[1]}" for i in range(3)]
 
     def _production_research(self, query: str) -> list[str]:
         """Production research using the Anthropic API.
@@ -83,6 +78,7 @@ class ResearchAgent(BaseAgent):
 
         try:
             import anthropic  # type: ignore[import-untyped]
+
             client = anthropic.Anthropic(api_key=api_key)
             message = client.messages.create(
                 model="claude-3-haiku-20240307",

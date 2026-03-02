@@ -8,9 +8,8 @@ iteration tracking, and message history.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
-from src.state.models import AgentRole, Message, TaskState
+from src.state.models import AgentRole, TaskState
 
 
 class BaseAgent(ABC):

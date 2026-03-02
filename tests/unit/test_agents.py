@@ -1,9 +1,10 @@
 """Tests for individual agents."""
+
 import pytest
 from src.agents.researcher import ResearchAgent
 from src.agents.analyzer import AnalyzerAgent
 from src.agents.reviewer import ReviewerAgent
-from src.state.models import TaskState, TaskStatus, AgentRole
+from src.state.models import TaskState, TaskStatus
 
 
 class TestResearchAgent:
@@ -100,7 +101,9 @@ class TestReviewerAgent:
 class TestProductionModeWithMockFallback:
     """ISC-2730: Test that all agents fall back to mock when ANTHROPIC_API_KEY is absent."""
 
-    def test_researcher_mock_fallback_without_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_researcher_mock_fallback_without_api_key(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """ResearchAgent._production_research() falls back to mock when key is absent."""
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         # When no API key, mock=None should resolve to mock=True
@@ -146,17 +149,20 @@ class TestProductionModeWithMockFallback:
     def test_production_research_method_exists(self) -> None:
         """ResearchAgent._production_research is a callable method (ISC-2730)."""
         agent = ResearchAgent(mock=True)
-        assert callable(getattr(agent, "_production_research", None)), \
-            "_production_research must be implemented as a callable method"
+        assert callable(
+            getattr(agent, "_production_research", None)
+        ), "_production_research must be implemented as a callable method"
 
     def test_production_analyze_method_exists(self) -> None:
         """AnalyzerAgent._production_analyze is a callable method (ISC-2730)."""
         agent = AnalyzerAgent(mock=True)
-        assert callable(getattr(agent, "_production_analyze", None)), \
-            "_production_analyze must be implemented as a callable method"
+        assert callable(
+            getattr(agent, "_production_analyze", None)
+        ), "_production_analyze must be implemented as a callable method"
 
     def test_production_review_method_exists(self) -> None:
         """ReviewerAgent._production_review is a callable method (ISC-2730)."""
         agent = ReviewerAgent(mock=True)
-        assert callable(getattr(agent, "_production_review", None)), \
-            "_production_review must be implemented as a callable method"
+        assert callable(
+            getattr(agent, "_production_review", None)
+        ), "_production_review must be implemented as a callable method"

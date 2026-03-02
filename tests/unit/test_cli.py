@@ -1,6 +1,5 @@
 """Tests for CLI."""
-import json
-from unittest.mock import patch
+
 from src.cli import run_demo, run_query, show_graph
 
 

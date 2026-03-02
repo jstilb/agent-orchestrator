@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Optional
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
@@ -135,10 +134,7 @@ def create_app() -> FastAPI:
 
             # Step 2-3: Analyze/Review loop
             iteration = 0
-            while (
-                state.status != TaskStatus.COMPLETE
-                and state.status != TaskStatus.FAILED
-            ):
+            while state.status != TaskStatus.COMPLETE and state.status != TaskStatus.FAILED:
                 state = await loop.run_in_executor(None, analyzer.process, state)
                 await push_state("state_change")
 

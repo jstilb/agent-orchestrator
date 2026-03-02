@@ -1,5 +1,5 @@
 """Tests for state models."""
-import pytest
+
 from hypothesis import given, strategies as st
 from src.state.models import TaskState, TaskStatus, AgentRole, Message
 
@@ -90,13 +90,27 @@ class TestTaskState:
         assert restored.query == original.query, "query must survive round-trip"
         assert restored.status == original.status, "status must survive round-trip"
         assert restored.analysis == original.analysis, "analysis must survive round-trip"
-        assert restored.research_results == original.research_results, "research_results must survive round-trip"
-        assert restored.final_output == original.final_output, "final_output must survive round-trip"
-        assert restored.iteration_count == original.iteration_count, "iteration_count must survive round-trip"
-        assert restored.max_iterations == original.max_iterations, "max_iterations must survive round-trip"
-        assert len(restored.messages) == len(original.messages), "message count must survive round-trip"
-        assert restored.messages[0].content == original.messages[0].content, "message content must survive round-trip"
-        assert restored.messages[0].sender == original.messages[0].sender, "message sender must survive round-trip"
+        assert (
+            restored.research_results == original.research_results
+        ), "research_results must survive round-trip"
+        assert (
+            restored.final_output == original.final_output
+        ), "final_output must survive round-trip"
+        assert (
+            restored.iteration_count == original.iteration_count
+        ), "iteration_count must survive round-trip"
+        assert (
+            restored.max_iterations == original.max_iterations
+        ), "max_iterations must survive round-trip"
+        assert len(restored.messages) == len(
+            original.messages
+        ), "message count must survive round-trip"
+        assert (
+            restored.messages[0].content == original.messages[0].content
+        ), "message content must survive round-trip"
+        assert (
+            restored.messages[0].sender == original.messages[0].sender
+        ), "message sender must survive round-trip"
 
 
 class TestMessage:

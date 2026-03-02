@@ -15,6 +15,7 @@ from uuid import uuid4
 
 class TaskStatus(str, Enum):
     """Status of a task through the agent pipeline."""
+
     PENDING = "pending"
     RESEARCHING = "researching"
     ANALYZING = "analyzing"
@@ -25,6 +26,7 @@ class TaskStatus(str, Enum):
 
 class AgentRole(str, Enum):
     """Available agent roles in the system."""
+
     RESEARCHER = "researcher"
     ANALYZER = "analyzer"
     REVIEWER = "reviewer"
@@ -34,6 +36,7 @@ class AgentRole(str, Enum):
 @dataclass
 class Message:
     """A message passed between agents."""
+
     content: str
     sender: AgentRole
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -47,6 +50,7 @@ class TaskState:
     This is the core data structure that all agents read and write.
     It tracks the full lifecycle of a task from input to output.
     """
+
     task_id: str = field(default_factory=lambda: str(uuid4()))
     query: str = ""
     status: TaskStatus = TaskStatus.PENDING

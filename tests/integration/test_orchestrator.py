@@ -1,6 +1,6 @@
 """Integration tests for the full orchestrator."""
+
 import json
-import pytest
 from src.orchestrator import AgentOrchestrator, OrchestratorConfig
 from src.state.models import TaskStatus
 
@@ -38,6 +38,7 @@ class TestOrchestrator:
 
     def test_step_by_step(self) -> None:
         from src.state.models import TaskState
+
         orchestrator = AgentOrchestrator(OrchestratorConfig(mock=True))
         state = TaskState(query="step test")
 
@@ -73,7 +74,9 @@ class TestOrchestrator:
 
         # Stage 2: Analyze (first pass)
         state = analyzer.process(state)
-        assert state.status == TaskStatus.ANALYZING, "After first analysis, status must be ANALYZING"
+        assert (
+            state.status == TaskStatus.ANALYZING
+        ), "After first analysis, status must be ANALYZING"
         assert len(state.analysis) > 0, "Analysis must be non-empty"
         first_analysis = state.analysis
 
@@ -81,30 +84,38 @@ class TestOrchestrator:
         state = reviewer.process(state)
         # With threshold > 1.0, reviewer sends back to analyzer unless max_iterations hit
         # iteration_count is 0, max_iterations is 2, so revision fires
-        assert state.status == TaskStatus.ANALYZING, \
-            "First review with impossible threshold must send back to ANALYZING for revision"
-        assert state.iteration_count == 1, "Iteration count must increment to 1 after first revision"
+        assert (
+            state.status == TaskStatus.ANALYZING
+        ), "First review with impossible threshold must send back to ANALYZING for revision"
+        assert (
+            state.iteration_count == 1
+        ), "Iteration count must increment to 1 after first revision"
         assert len(state.review_notes) > 0, "Review notes must be populated after first review"
 
         # Stage 4: Analyze (revision pass)
         state = analyzer.process(state)
-        assert state.status == TaskStatus.ANALYZING, "After revision analysis, status must be ANALYZING"
+        assert (
+            state.status == TaskStatus.ANALYZING
+        ), "After revision analysis, status must be ANALYZING"
 
         # Final Review: iteration_count=1, max_iterations=2, so one more revision possible
         # Force completion by exhausting iterations
         state.iteration_count = state.max_iterations  # exhaust iterations
         state = reviewer.process(state)
-        assert state.status == TaskStatus.COMPLETE, \
-            f"Final status must be COMPLETE when max_iterations exhausted, got {state.status.value}"
+        assert (
+            state.status == TaskStatus.COMPLETE
+        ), f"Final status must be COMPLETE when max_iterations exhausted, got {state.status.value}"
         assert len(state.final_output) > 0, "Final output must be non-empty after completion"
-        assert state.analysis == first_analysis or len(state.analysis) > 0, \
-            "Analysis must persist through the revision loop"
+        assert (
+            state.analysis == first_analysis or len(state.analysis) > 0
+        ), "Analysis must persist through the revision loop"
 
 
 class TestOrchestratorAPI:
     def test_api_health(self) -> None:
         from fastapi.testclient import TestClient
         from src.api.app import create_app
+
         client = TestClient(create_app())
         resp = client.get("/health")
         assert resp.status_code == 200
@@ -113,6 +124,7 @@ class TestOrchestratorAPI:
     def test_api_run(self) -> None:
         from fastapi.testclient import TestClient
         from src.api.app import create_app
+
         client = TestClient(create_app())
         resp = client.post("/run", json={"query": "test query", "mock": True})
         assert resp.status_code == 200
@@ -123,6 +135,7 @@ class TestOrchestratorAPI:
     def test_api_graph(self) -> None:
         from fastapi.testclient import TestClient
         from src.api.app import create_app
+
         client = TestClient(create_app())
         resp = client.get("/graph")
         assert resp.status_code == 200
@@ -156,23 +169,23 @@ class TestOrchestratorAPI:
 
         # Must include state_change frames
         state_change_frames = [f for f in frames if f["event"] == "state_change"]
-        assert len(state_change_frames) >= 2, \
-            f"Expected >= 2 state_change frames (research + review), got {state_change_frames}"
+        assert (
+            len(state_change_frames) >= 2
+        ), f"Expected >= 2 state_change frames (research + review), got {state_change_frames}"
 
         # Each state_change frame must carry a valid TaskStatus value
         valid_statuses = {"pending", "researching", "analyzing", "reviewing", "complete", "failed"}
         for frame in state_change_frames:
-            assert frame["status"] in valid_statuses, \
-                f"Invalid status in frame: {frame['status']}"
+            assert frame["status"] in valid_statuses, f"Invalid status in frame: {frame['status']}"
             assert "task_id" in frame, "Frame must include task_id"
             assert "message_count" in frame, "Frame must include message_count"
 
         # Last frame must be "complete"
         last = frames[-1]
-        assert last["event"] == "complete", \
-            f"Last frame must be 'complete', got: {last['event']}"
-        assert last["status"] == "complete", \
-            f"Terminal status must be 'complete', got: {last['status']}"
+        assert last["event"] == "complete", f"Last frame must be 'complete', got: {last['event']}"
+        assert (
+            last["status"] == "complete"
+        ), f"Terminal status must be 'complete', got: {last['status']}"
         # Complete frame must include full state fields
         assert "query" in last, "Complete frame must include query"
         assert "final_output" in last, "Complete frame must include final_output"
