@@ -82,8 +82,7 @@ class AnalyzerAgent(BaseAgent):
                     }
                 ],
             )
-            return (
-                message.content[0].text if message.content else self._mock_analyze(query, results)
-            )
+            first = message.content[0] if message.content else None
+            return getattr(first, "text", None) or self._mock_analyze(query, results)
         except Exception as exc:  # noqa: BLE001
             return self._mock_analyze(query, results) + f"\n\n[Production error: {exc}]"

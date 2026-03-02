@@ -102,7 +102,7 @@ def create_app() -> FastAPI:
 
             query: str = str(params.get("query", "What is the future of AI?"))
             mock: bool = bool(params.get("mock", True))
-            max_iterations: int = int(params.get("max_iterations", 3))  # type: ignore[arg-type]
+            max_iterations: int = int(str(params.get("max_iterations", 3)))
 
             config = OrchestratorConfig(mock=mock, max_iterations=max_iterations)
             researcher = ResearchAgent(mock=mock)

@@ -106,7 +106,8 @@ class ReviewerAgent(BaseAgent):
                     }
                 ],
             )
-            raw = message.content[0].text.strip() if message.content else "0.5"
+            first = message.content[0] if message.content else None
+            raw = (getattr(first, "text", None) or "0.5").strip()
             first_token = raw.split()[0].rstrip(".,")
             try:
                 score = float(first_token)

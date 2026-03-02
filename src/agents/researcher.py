@@ -93,7 +93,8 @@ class ResearchAgent(BaseAgent):
                     }
                 ],
             )
-            raw = message.content[0].text if message.content else ""
+            first = message.content[0] if message.content else None
+            raw = getattr(first, "text", None) or ""
             lines = [line.strip() for line in raw.splitlines() if line.strip()]
             # Extract lines that look like findings (numbered or bullet)
             findings = [
